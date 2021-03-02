@@ -1,0 +1,33 @@
+{
+  "name": "orpheus",
+  "version": "0.1.0",
+  "author": "cerebralcourt",
+  "license": "BSD-3-Clause",
+  "scripts": {
+    "dev": "NODE_ENV=development rollup -cw",
+    "build": "NODE_ENV=production rollup -c",
+    "serve": "live-server build",
+    "lint": "eslint src --ext=.js,.jsx --fix"
+  },
+  "dependencies": {
+    "arweave": "^1.10.11",
+    "solid-js": "^0.24.12",
+    "tailwindcss": "^2.0.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.13.8",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-node-resolve": "^11.2.0",
+    "autoprefixer": "^10.2.4",
+    "babel-preset-solid": "^0.24.12",
+    "cssnano": "^4.1.10",
+    "eslint": "^7.21.0",
+    "live-server": "^1.2.1",
+    "postcss": "^8.2.6",
+    "rollup": "^2.40.0",
+    "rollup-plugin-analyzer": "^4.0.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-postcss": "^4.0.0",
+    "rollup-plugin-uglify": "^6.0.4"
+  }
+}
