@@ -2,7 +2,7 @@ import { For } from "solid-js/web"
 import { alpha } from "./store"
 
 function Header({ matches }) {
-  const linkClass = "block text-center px-2 py-1 text-white rounded-sm hover:bg-indigo-500"
+  const linkClass = "block px-2 py-1 text-white rounded-sm hover:bg-indigo-500"
   const active = letter => matches("/" + letter) ? " bg-indigo-700" : ""
 
   return (

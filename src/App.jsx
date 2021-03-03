@@ -1,6 +1,7 @@
-import { createSignal, onCleanup } from "solid-js"
+import { createSignal, createState, onCleanup } from "solid-js"
 import { Switch, Match } from "solid-js/web"
 import Header from "./Header.jsx"
+import Footer from "./Footer.jsx"
 import Home from "./Home.jsx"
 import Alpha from "./Alpha.jsx"
 import { alpha, arweave } from "./store"
@@ -18,9 +19,11 @@ function createRouteHandler() {
 
 function App() {
   const matches = createRouteHandler()
+  const [wallet, setWallet] = createSignal(null)
+  const [address, setAddress] = createSignal(null)
   
   return (
-  	<>
+  	<div class="flex flex-col w-screen h-screen bg-indigo-200">
       <Header matches={matches} />
       <Switch>
         <Match when={matches("/")}>
@@ -34,7 +37,8 @@ function App() {
           )}
         </For>
       </Switch>
-    </>
+      <Footer wallet={wallet} setWallet={setWallet} address={address} setAddress={setAddress} />
+    </div>
   )
 }
 
