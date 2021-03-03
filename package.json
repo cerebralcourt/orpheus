@@ -12,6 +12,7 @@
     "lint": "eslint src --ext=.js,.jsx --fix"
   },
   "dependencies": {
+    "arlang": "^0.1.4",
     "arweave": "^1.10.11",
     "solid-js": "^0.24.12",
     "tailwindcss": "^2.0.3"

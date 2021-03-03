@@ -780,6 +780,11 @@ argparse@^1.0.7:
   dependencies:
     sprintf-js "~1.0.2"
 
+arlang@^0.1.4:
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/arlang/-/arlang-0.1.4.tgz#8469568187b64bd28cc39c9a0f7cc8ccfd7e788e"
+  integrity sha512-9DiA1ZWgeQ5zdbdeSCl0f7AI+T6WA9/KUIY5OlkV6CmpgYwfJVgIGUhAJtupxbsj0OSJWh7CMbu397lbB9czfg==
+
 arr-diff@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/arr-diff/-/arr-diff-4.0.0.tgz#d6461074febfec71e7e15235761a329a5dc7c520"
