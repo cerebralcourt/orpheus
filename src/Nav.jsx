@@ -1,5 +1,5 @@
 import { For } from "solid-js/web"
-import { alpha } from "./static"
+import { alpha } from "./store"
 
 function Nav({ matches }) {
   const linkClass = "block text-center px-2 py-1 text-white rounded-sm hover:bg-blue-700"

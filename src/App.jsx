@@ -3,7 +3,9 @@ import { Switch, Match } from "solid-js/web"
 import Nav from "./Nav.jsx"
 import Home from "./Home.jsx"
 import Alpha from "./Alpha.jsx"
-import { alpha } from "./static"
+import { alpha, arweave } from "./store"
+
+arweave.network.getInfo().then(console.log)
 
 function createRouteHandler() {
   const [location, setLocation] = createSignal(window.location.hash.slice(1) || "/")
