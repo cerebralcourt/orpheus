@@ -1,4 +1,4 @@
-import * as query from "./query"
+import { publish_lyrics } from "./query"
 
 function SubmitLyrics({ wallet }) {
   const inputClass = "w-full border border-gray-300 rounded bg-white text-gray-500 py-1 px-3 mb-5"
@@ -6,7 +6,7 @@ function SubmitLyrics({ wallet }) {
   const submit = (e) => {
   	e.preventDefault()
 
-    query.lyrics.post(wallet(), {
+    publish_lyrics(wallet(), {
       title: document.getElementById("entry-title").value,
       artist: document.getElementById("entry-artist").value,
       album: document.getElementById("entry-album").value,
@@ -33,7 +33,7 @@ function SubmitLyrics({ wallet }) {
           <input
             type="submit"
             value="Submit Lyrics"
-            class="bg-indigo-600 hover:bg-indigo-500 rounded px-5 py-2 text-white cursor-pointer"
+            class="bg-indigo-600 hover:bg-indigo-500 focus:bg-indigo-500 rounded px-5 py-2 text-white cursor-pointer"
           />
         </form>
       </Show>

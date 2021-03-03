@@ -26,9 +26,11 @@ function Footer({ wallet, setWallet, address, setAddress }) {
   	upload.click()
   	const oninput = async () => {
   	  const file = upload.files[0]
-  	  const {wallet, address} = await getWalletFromFile(file)
+  	  const { wallet, address } = await getWalletFromFile(file)
   	  setWallet(wallet)
       setAddress(address)
+      sessionStorage.setItem("wallet", JSON.stringify(wallet))
+      sessionStorage.setItem("address", address)
   	  upload.removeEventListener("input", oninput)
   	}
   	upload.addEventListener("input", oninput)
@@ -37,6 +39,8 @@ function Footer({ wallet, setWallet, address, setAddress }) {
   const signout = () => {
     setWallet(null)
     setAddress(null)
+    sessionStorage.removeItem("wallet")
+    sessionStorage.removeItem("address")
   }
 
   return (

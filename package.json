@@ -14,6 +14,7 @@
   "dependencies": {
     "arlang": "^0.1.4",
     "arweave": "^1.10.11",
+    "localforage": "^1.9.0",
     "solid-js": "^0.24.12",
     "tailwindcss": "^2.0.3"
   },

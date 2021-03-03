@@ -6,8 +6,7 @@ import Home from "./Home.jsx"
 import Alpha from "./Alpha.jsx"
 import SubmitLyrics from "./SubmitLyrics.jsx"
 import { alpha, arweave } from "./store"
-
-arweave.network.getInfo().then(console.log)
+import * as query from "./query"
 
 function createRouteHandler() {
   const [location, setLocation] = createSignal(window.location.hash.slice(1) || "/")
@@ -20,8 +19,8 @@ function createRouteHandler() {
 
 function App() {
   const matches = createRouteHandler()
-  const [wallet, setWallet] = createSignal(null)
-  const [address, setAddress] = createSignal(null)
+  const [wallet, setWallet] = createSignal(sessionStorage.getItem("wallet") ? JSON.parse(sessionStorage.getItem("wallet")) : null)
+  const [address, setAddress] = createSignal(sessionStorage.getItem("address"))
   
   return (
   	<div class="flex flex-col max-w-screen min-h-screen bg-indigo-200">
