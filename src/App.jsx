@@ -1,6 +1,6 @@
 import { createSignal, onCleanup } from "solid-js"
 import { Switch, Match } from "solid-js/web"
-import Nav from "./Nav.jsx"
+import Header from "./Header.jsx"
 import Home from "./Home.jsx"
 import Alpha from "./Alpha.jsx"
 import { alpha, arweave } from "./store"
@@ -21,7 +21,7 @@ function App() {
   
   return (
   	<>
-      <Nav matches={matches} />
+      <Header matches={matches} />
       <Switch>
         <Match when={matches("/")}>
           <Home />
