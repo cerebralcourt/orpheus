@@ -40,8 +40,7 @@ export const publish_lyrics = async (wallet, lyricItem) => {
     artist = artist_txids[0]
   } else {
     const name = lyricItem.artist
-    const image = null
-    const data = JSON.stringify({ name, image })
+    const data = JSON.stringify({ name })
 
     let letter
     if (name[0].match(/^[a-zA-Z]$/)) {
@@ -62,8 +61,8 @@ export const publish_lyrics = async (wallet, lyricItem) => {
     const title = lyricItem.album
     const year = null
     const image = null
-    const data = JSON.stringify({ title, artist, year, image })
-    album = await transaction(wallet, data, { type: "album", artist })
+    const data = JSON.stringify({ title, artist })
+    album = await transaction(wallet, data, { type: "album", title, artist })
   }
 
   const data = JSON.stringify({ ...lyricItem, artist, album })
@@ -93,7 +92,6 @@ export const get_artists = async (letter, update) => {
 
   arql('& (= type "artist") (= letter $1)', [letter])
     .then(async arql_txids => {
-      console.log(arql_txids)
       const length = artists.length
 
       for (let i = 0; i < arql_txids.length; i++) {
@@ -117,4 +115,35 @@ export const get_artists = async (letter, update) => {
 
   artists.sort((a, b) => a.name > b.name)
   update(artists)
+}
+
+/*
+ * Retrieves metadata, albums and lyrics related to the artist
+ */
+export const get_artist = async (artist_txid) => {
+  const data = await arweave.transactions.getData(artist_txid, { decode: true, string: true })
+  const artist = JSON.parse(data)
+
+  const album_txids = await arql('& (= type "album") (= artist $1)', [artist_txid])
+  let albums = []
+
+  for (let i = 0; i < album_txids.length; i++) {
+    const album_txid = album_txids[i]
+    const data = await arweave.transactions.getData(album_txid, { decode: true, string: true })
+    const album = JSON.parse(data)
+
+    const track_txids = await arql('& (= type "lyrics") (& (= album $1) (= artist $2))', [album_txid, artist_txid])
+    let tracks = []
+
+    for (let j = 0; j < track_txids.length; j++) {
+      const txid = track_txids[j]
+      const data = await arweave.transactions.getData(txid, { decode: true, string: true })
+      const track = { ...JSON.parse(data), txid }
+      tracks.push(track)
+    }
+
+    albums.push({ ...album, tracks })
+  }
+
+  return { ...artist, albums }
 }
