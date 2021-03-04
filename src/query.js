@@ -32,18 +32,20 @@ async function arql(query, params) {
 /*
  * Creates artist and album pages if not already available
  */
-export const publish_lyrics = async (wallet, lyricItem) => {
-  const artist_txids = await arql('& (= type "artist") (= name $1)', [lyricItem.artist])
+export const publish_lyrics = async (wallet, track) => {
+  const artist_txids = await arql('& (= type "artist") (= name $1)', [track.artist])
 
   let artist
   if (artist_txids.length) {
     artist = artist_txids[0]
   } else {
-    const name = lyricItem.artist
+    const name = track.artist
     const data = JSON.stringify({ name })
 
     let letter
-    if (name[0].match(/^[a-zA-Z]$/)) {
+    if (name.toLowerCase().startsWith("the ")) {
+      letter = name[4].toUpperCase()
+    } else if (name[0].match(/^[a-zA-Z]$/)) {
       letter = name[0].toUpperCase()
     } else {
       letter = "#"
@@ -52,21 +54,23 @@ export const publish_lyrics = async (wallet, lyricItem) => {
     artist = await transaction(wallet, data, { type: "artist", name, letter })
   }
 
-  const album_txids = await arql('& (= type "album") (& (= artist $1) (= title $2))', [artist, lyricItem.album])
+  const album_txids = await arql('& (= type "album") (& (= artist $1) (= title $2))', [artist, track.album])
 
   let album
   if (album_txids.length) {
     album = album_txids[0]
   } else {
-    const title = lyricItem.album
+    const title = track.album
     const year = null
     const image = null
     const data = JSON.stringify({ title, artist })
     album = await transaction(wallet, data, { type: "album", title, artist })
   }
 
-  const data = JSON.stringify({ ...lyricItem, artist, album })
-  await transaction(wallet, data, { type: "lyrics", artist, album })
+  const lyrics = track.lyrics.split(/\n\n+/).map(p => p.split("\n"))
+
+  const data = JSON.stringify({ ...track, artist, album, lyrics })
+  return await transaction(wallet, data, { type: "lyrics", artist, album })
 }
 
 /*
@@ -145,5 +149,24 @@ export const get_artist = async (artist_txid) => {
     albums.push({ ...album, tracks })
   }
 
+  albums.sort((a, b) => a.year > b.year)
+
   return { ...artist, albums }
+}
+
+/*
+ * Retrieves track metadata and lyrics
+ */
+export const get_track = async (txid) => {
+  const track_data = await arweave.transactions.getData(txid, { decode: true, string: true })
+  const track = JSON.parse(track_data)
+
+  const album_data = await arweave.transactions.getData(track.album, { decode: true, string: true })
+  const album = JSON.parse(album_data).title
+
+  const artist_data = await arweave.transactions.getData(track.artist, { decode: true, string: true })
+  const { name } = JSON.parse(artist_data)
+  const artist = { txid: track.artist, name }
+
+  return { ...track, artist, album }
 }

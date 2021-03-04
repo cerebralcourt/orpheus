@@ -5,6 +5,7 @@ import Footer from "./Footer.jsx"
 import Home from "./Home.jsx"
 import Alpha from "./Alpha.jsx"
 import Artist from "./Artist.jsx"
+import Lyrics from "./Lyrics.jsx"
 import SubmitLyrics from "./SubmitLyrics.jsx"
 import { alpha, arweave } from "./store"
 import * as query from "./query"
@@ -30,6 +31,9 @@ function App() {
       <Header matches={matches} />
       <main class="flex-grow px-4 py-10 text-center">
         <Switch>
+          <Match when={startsWith("/lyrics/")}>
+            <Lyrics />
+          </Match>
           <Match when={startsWith("/artist/")}>
             <Artist />
           </Match>

@@ -12,6 +12,7 @@ function SubmitLyrics({ wallet }) {
       album: document.getElementById("entry-album").value,
       lyrics: document.getElementById("entry-lyrics").value,
     })
+      .then(txid => window.location.hash = "#/lyrics/" + txid)
   }
 
   return (
