@@ -2,7 +2,7 @@
 
 An open, collaborative music lyric database with a minimalistic interface.
 
-You can find the app here: (link not up yet)
+You can find the app here: https://arweave.net/EfrHAEAQxYXtaO_E28EHfT02-6ljAe69C-dZp4eWCK8
 
 ## TODO
 

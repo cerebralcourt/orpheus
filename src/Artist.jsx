@@ -12,7 +12,7 @@ function Artist() {
   	<>
   	  <Show when={artist()}>
         <img
-          src={artist().image || "/assets/no-image.png"}
+          src={artist().image || "assets/no-image.png"}
           class="rounded-full w-48 h-48 mx-auto shadow mb-5"
         />
         <h1 class="text-2xl font-bold">{artist().name}</h1>
@@ -21,7 +21,7 @@ function Artist() {
           	<div class="md:w-1/2 lg:w-1/3 mx-auto mt-10">
           	  <div class="flex items-center justify-center mb-5">
                 <img
-                  src={album.image || "/assets/no-image.png"}
+                  src={album.image || "assets/no-image.png"}
                   class="w-32 h-32 shadow"
                 />
                 <div class="text-left ml-5">

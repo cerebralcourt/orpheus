@@ -12,7 +12,7 @@ function Lyrics() {
   	<>
   	  <Show when={track()}>
         <img
-          src={track().image || "/assets/no-image.png"}
+          src={track().image || "assets/no-image.png"}
           class="rounded-full w-48 h-48 mx-auto shadow mb-5"
         />
         <h1 class="text-2xl font-bold">{track().title}</h1>
