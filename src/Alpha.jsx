@@ -8,7 +8,7 @@ function Alpha({ letter }) {
   get_artists(letter, setArtists)
 
   return (
-  	<main class="flex-grow py-10">
+  	<>
   	  <div class="md:w-2/3 lg:w-1/2 mx-auto grid grid-cols-1 lg:grid-cols-2 gap-x-3 gap-y-1">
   	  	<For each={artists()}>
           {artist => (
@@ -21,7 +21,7 @@ function Alpha({ letter }) {
           )}
   	    </For>
   	  </div>
-  	</main>
+  	</>
   )
 }
 

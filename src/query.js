@@ -4,7 +4,7 @@ import { arweave } from "./store"
 
 async function transaction(wallet, data, tags) {
   const tx = await arweave.createTransaction({ data }, wallet)
-  // tx.addTag("appname", "orpheus")
+  tx.addTag("appname", "orpheus")
 
   const entries = Object.entries(tags)
   for (let i = 0; i < entries.length; i++) {
@@ -25,11 +25,13 @@ async function transaction(wallet, data, tags) {
 }
 
 async function arql(query, params) {
-  // const q = arlang(`& (= appname "orpheus") (${query})`, { lang: "sym", params })
-  const q = arlang(query, { lang: "sym", params })
+  const q = arlang(`& (= appname "orpheus") (${query})`, { lang: "sym", params })
   return await arweave.arql(q)
 }
 
+/*
+ * Creates artist and album pages if not already available
+ */
 export const publish_lyrics = async (wallet, lyricItem) => {
   const artist_txids = await arql('& (= type "artist") (= name $1)', [lyricItem.artist])
 
@@ -68,6 +70,10 @@ export const publish_lyrics = async (wallet, lyricItem) => {
   await transaction(wallet, data, { type: "lyrics", artist, album })
 }
 
+/*
+ * Pulls artists matching the letter from local cache
+ * Checks the network for any updates and updates local cache if so
+ */
 export const get_artists = async (letter, update) => {
   let artists = []
 
@@ -81,23 +87,34 @@ export const get_artists = async (letter, update) => {
     }
     
     artists.push({ ...data, txid })
-    artists.sort((a, b) => a.name > b.name)
-    update(artists)
   }
 
   const txids = await localforage.getItem("txids-" + letter) || []
 
   arql('& (= type "artist") (= letter $1)', [letter])
-    .then(arql_txids => {
+    .then(async arql_txids => {
+      console.log(arql_txids)
+      const length = artists.length
+
       for (let i = 0; i < arql_txids.length; i++) {
         const txid = arql_txids[i]
-        if (!txids.includes(txid)) next(txid)
+        if (!txids.includes(txid)) await next(txid)
       }
-      const new_txids = Array.from(new Set([...txids, ...arql_txids]))
-      localforage.setItem("txids-" + letter, new_txids)
+
+      if (artists.length > length) {
+        artists.sort((a, b) => a.name > b.name)
+        update(artists)
+
+        const new_txids = Array.from(new Set([...txids, ...arql_txids]))
+        localforage.setItem("txids-" + letter, new_txids)
+      }
     })
+    .catch(() => {})
 
   for (let i = 0; i < txids.length; i++) {
-    next(txids[i])
+    await next(txids[i])
   }
+
+  artists.sort((a, b) => a.name > b.name)
+  update(artists)
 }

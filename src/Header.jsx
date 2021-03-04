@@ -10,7 +10,7 @@ function Header({ matches }) {
       <nav class="bg-indigo-600 flex justify-center py-3">
         <ul class="flex items-center mx-auto">
           <li>
-            <a href="#/" title="Home" class="block pr-4">
+            <a href="#/" title="Orpheus" class="block pr-4">
               <img src="assets/lyre.svg" alt="home icon" class="h-8" />
             </a>
           </li>

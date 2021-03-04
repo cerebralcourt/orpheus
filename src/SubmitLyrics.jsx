@@ -15,7 +15,7 @@ function SubmitLyrics({ wallet }) {
   }
 
   return (
-  	<main class="flex-grow py-10 text-center">
+  	<>
   	  <h1 class="text-2xl mb-4 font-bold">Submit Lyrics</h1>
   	  <Show
         when={wallet()}
@@ -37,7 +37,7 @@ function SubmitLyrics({ wallet }) {
           />
         </form>
       </Show>
-  	</main>
+  	</>
   )
 }
 

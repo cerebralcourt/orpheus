@@ -62,7 +62,7 @@ function Footer({ wallet, setWallet, address, setAddress }) {
           </a>
         </li>
         <Show
-        	when={wallet() && address()}
+        	when={wallet()}
         	fallback={
         	  <li>
 	            <input id="upload" class="hidden" type="file" accept=".json" />
