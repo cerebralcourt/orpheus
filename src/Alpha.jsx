@@ -13,7 +13,7 @@ function Alpha({ letter }) {
   	  	<For each={artists()}>
           {artist => (
             <a
-              href={"#/artist/" + artist.txid}
+              href={"#/artist/" + artist.id}
               class="block text-center py-1 text-blue-900 bg-indigo-300 border-b border-indigo-400"
             >
           	  {artist.name}

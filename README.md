@@ -6,7 +6,7 @@ You can find the app here: https://arweave.net/EfrHAEAQxYXtaO_E28EHfT02-6ljAe69C
 
 ## TODO
 
-- Switch from ArQL to GraphQL
+- Loading indicators
 - Mobile support
 - Search engine
 - Service worker/cache optimizations
@@ -17,3 +17,4 @@ You can find the app here: https://arweave.net/EfrHAEAQxYXtaO_E28EHfT02-6ljAe69C
 - Proof of stake
 - Cost for submitting lyrics and voting
 - Rewards for voting and receiving positive votes
+- JavaScript API

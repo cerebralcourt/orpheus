@@ -4,9 +4,9 @@ import { get_artist } from "./query"
 
 function Artist() {
   const [artist, setArtist] = createSignal(null)
-  const txid = window.location.hash.split("/")[2]
+  const id = window.location.hash.split("/")[2]
 
-  get_artist(txid).then(setArtist)
+  get_artist(id).then(setArtist)
 
   return (
   	<>
@@ -32,7 +32,7 @@ function Artist() {
               <For each={album.tracks}>
                 {(track, i) => (
                   <a
-                    href={"#/lyrics/" + track.txid}
+                    href={"#/lyrics/" + track.id}
                     class={"block w-full py-1 " + (i() % 2 == 0 ? "bg-gray-200" : "bg-gray-300")}
                   >
                     {track.title}

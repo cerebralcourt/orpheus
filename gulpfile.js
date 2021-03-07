@@ -52,6 +52,7 @@ function js() {
               loader: "babel-loader",
               options: {
                 presets: ["solid"],
+                plugins: ["@babel/plugin-proposal-optional-chaining"],
               },
             },
           },

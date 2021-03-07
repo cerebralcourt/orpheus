@@ -1,4 +1,3 @@
-import arlang from "arlang"
 import localforage from "localforage"
 import { arweave } from "./store"
 
@@ -24,20 +23,44 @@ async function transaction(wallet, data, tags) {
   return tx["id"]
 }
 
-async function arql(query, params) {
-  const q = arlang(`& (= appname "orpheus") (${query})`, { lang: "sym", params })
-  return await arweave.arql(q)
+async function query(tags) {
+  tags.appname = "orpheus"
+  const to_obj = ([key, value]) => `{name: ${JSON.stringify(key)}, values: [${JSON.stringify(value)}]}`
+  const tags_str = "[" + Object.entries(tags).map(to_obj).join(",") + "]"
+
+  const query = `query {
+    transactions(tags: ${tags_str}) {
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }`
+
+  const res = await arweave.api.post("/graphql", { query })
+
+  const edges = res.data?.data?.transactions?.edges
+  let nodes = []
+
+  for (let i = 0; i < edges.length; i++) {
+    const { node } = edges[i]
+    const data = await arweave.transactions.getData(node.id, { decode: true, string: true })
+    nodes.push({ ...node, ...JSON.parse(data) })
+  }
+
+  return nodes
 }
 
 /*
  * Creates artist and album pages if not already available
  */
 export const publish_lyrics = async (wallet, track) => {
-  const artist_txids = await arql('& (= type "artist") (= name $1)', [track.artist])
+  const artists = await query({ type: "artist", name: track.artist })
 
   let artist
-  if (artist_txids.length) {
-    artist = artist_txids[0]
+  if (artists.length) {
+    artist = artists[0].id
   } else {
     const name = track.artist
     const data = JSON.stringify({ name })
@@ -54,11 +77,11 @@ export const publish_lyrics = async (wallet, track) => {
     artist = await transaction(wallet, data, { type: "artist", name, letter })
   }
 
-  const album_txids = await arql('& (= type "album") (& (= artist $1) (= title $2))', [artist, track.album])
+  const albums = await query({ type: "album", artist, title: track.album })
 
   let album
-  if (album_txids.length) {
-    album = album_txids[0]
+  if (albums.length) {
+    album = albums[0].id
   } else {
     const title = track.album
     const year = null
@@ -78,44 +101,24 @@ export const publish_lyrics = async (wallet, track) => {
  * Checks the network for any updates and updates local cache if so
  */
 export const get_artists = async (letter, update) => {
-  let artists = []
+  const artists = await localforage.getItem("artists-" + letter) || []
 
-  const next = async (txid) => {
-    let data = await localforage.getItem(txid)
-
-    if (!data) {
-      const arData = await arweave.transactions.getData(txid, { decode: true, string: true })
-      data = JSON.parse(arData)
-      await localforage.setItem(txid, data)
-    }
-    
-    artists.push({ ...data, txid })
-  }
-
-  const txids = await localforage.getItem("txids-" + letter) || []
-
-  arql('& (= type "artist") (= letter $1)', [letter])
-    .then(async arql_txids => {
+  query({ type: "artist", letter })
+    .then(async query_artists => {
       const length = artists.length
 
-      for (let i = 0; i < arql_txids.length; i++) {
-        const txid = arql_txids[i]
-        if (!txids.includes(txid)) await next(txid)
+      for (let i = 0; i < query_artists.length; i++) {
+        const artist = query_artists[i]
+        if (artists.findIndex(a => a.id === artist.id) === -1) artists.push(artist)
       }
 
       if (artists.length > length) {
         artists.sort((a, b) => a.name > b.name)
         update(artists)
-
-        const new_txids = Array.from(new Set([...txids, ...arql_txids]))
-        localforage.setItem("txids-" + letter, new_txids)
+        localforage.setItem("artists-" + letter, artists)
       }
     })
     .catch(() => {})
-
-  for (let i = 0; i < txids.length; i++) {
-    await next(txids[i])
-  }
 
   artists.sort((a, b) => a.name > b.name)
   update(artists)
@@ -124,28 +127,16 @@ export const get_artists = async (letter, update) => {
 /*
  * Retrieves metadata, albums and lyrics related to the artist
  */
-export const get_artist = async (artist_txid) => {
-  const data = await arweave.transactions.getData(artist_txid, { decode: true, string: true })
+export const get_artist = async (artist_id) => {
+  const data = await arweave.transactions.getData(artist_id, { decode: true, string: true })
   const artist = JSON.parse(data)
 
-  const album_txids = await arql('& (= type "album") (= artist $1)', [artist_txid])
+  const query_albums = await query({ type: "album", artist: artist_id }, ["id", "title", "year"])
   let albums = []
 
-  for (let i = 0; i < album_txids.length; i++) {
-    const album_txid = album_txids[i]
-    const data = await arweave.transactions.getData(album_txid, { decode: true, string: true })
-    const album = JSON.parse(data)
-
-    const track_txids = await arql('& (= type "lyrics") (& (= album $1) (= artist $2))', [album_txid, artist_txid])
-    let tracks = []
-
-    for (let j = 0; j < track_txids.length; j++) {
-      const txid = track_txids[j]
-      const data = await arweave.transactions.getData(txid, { decode: true, string: true })
-      const track = { ...JSON.parse(data), txid }
-      tracks.push(track)
-    }
-
+  for (let i = 0; i < query_albums.length; i++) {
+    const album = query_albums[i]
+    const tracks = await query({ type: "lyrics", album: album.id, artist: artist_id }, ["id", "title"])
     albums.push({ ...album, tracks })
   }
 
@@ -157,8 +148,8 @@ export const get_artist = async (artist_txid) => {
 /*
  * Retrieves track metadata and lyrics
  */
-export const get_track = async (txid) => {
-  const track_data = await arweave.transactions.getData(txid, { decode: true, string: true })
+export const get_track = async (id) => {
+  const track_data = await arweave.transactions.getData(id, { decode: true, string: true })
   const track = JSON.parse(track_data)
 
   const album_data = await arweave.transactions.getData(track.album, { decode: true, string: true })
@@ -166,7 +157,7 @@ export const get_track = async (txid) => {
 
   const artist_data = await arweave.transactions.getData(track.artist, { decode: true, string: true })
   const { name } = JSON.parse(artist_data)
-  const artist = { txid: track.artist, name }
+  const artist = { id: track.artist, name }
 
   return { ...track, artist, album }
 }

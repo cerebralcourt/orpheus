@@ -4,9 +4,9 @@ import { get_track } from "./query"
 
 function Lyrics() {
   const [track, setTrack] = createSignal(null)
-  const txid = window.location.hash.split("/")[2]
+  const id = window.location.hash.split("/")[2]
 
-  get_track(txid).then(setTrack)
+  get_track(id).then(setTrack)
 
   return (
   	<>
@@ -16,7 +16,7 @@ function Lyrics() {
           class="rounded-full w-48 h-48 mx-auto shadow mb-5"
         />
         <h1 class="text-2xl font-bold">{track().title}</h1>
-        <a href={"#/artist/" + track().artist.txid} class="block">{track().artist.name}</a>
+        <a href={"#/artist/" + track().artist.id} class="block">{track().artist.name}</a>
         <p class="mb-10">{track().album}</p>
         <For each={track().lyrics}>
           {paragraph => (
