@@ -6,6 +6,7 @@ import Home from "./Home.jsx"
 import Alpha from "./Alpha.jsx"
 import Artist from "./Artist.jsx"
 import Lyrics from "./Lyrics.jsx"
+import Search from "./Search.jsx"
 import SubmitLyrics from "./SubmitLyrics.jsx"
 import { alpha, arweave } from "./store"
 import * as query from "./query"
@@ -36,6 +37,9 @@ function App() {
           </Match>
           <Match when={startsWith("/artist/")}>
             <Artist />
+          </Match>
+          <Match when={startsWith("/search/")}>
+            <Search />
           </Match>
           <Match when={matches("/submit-lyrics")}>
             <SubmitLyrics wallet={wallet} />

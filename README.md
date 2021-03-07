@@ -8,7 +8,6 @@ You can find the app here: https://arweave.net/EfrHAEAQxYXtaO_E28EHfT02-6ljAe69C
 
 - Loading indicators
 - Mobile support
-- Search engine
 - Service worker
 - Voting system for the most accurate lyrics and spam reduction
 - Voting system for album images, release year and track listing

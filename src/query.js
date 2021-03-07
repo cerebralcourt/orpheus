@@ -1,4 +1,6 @@
 import localforage from "localforage"
+import levenshtein from "js-levenshtein"
+import pmap from "promise.map"
 import { arweave } from "./store"
 
 async function transaction(wallet, data, tags) {
@@ -57,12 +59,17 @@ async function query(tags) {
 
   const ids = await localforage.getItem(key) || await fetch_ids()
   let nodes = []
+  let promises = []
 
   for (let i = 0; i < ids.length; i++) {
-    const id = ids[i]
-    const data = await get_data(id)
-    nodes.push({ id, ...data })
+    promises.push(async () => {
+      const id = ids[i]
+      const data = await get_data(id)
+      nodes.push({ id, ...data })
+    })
   }
+
+  await pmap(promises, p => p(), 30)
 
   return nodes
 }
@@ -129,7 +136,7 @@ export const get_artists = async (letter, update) => {
  * Retrieves metadata, albums and lyrics related to the artist
  */
 export const get_artist = async (artist_id) => {
-  const artist = get_data(artist_id)
+  const artist = await get_data(artist_id)
 
   const query_albums = await query({ type: ["album"], artist: [artist_id] })
   let albums = []
@@ -156,4 +163,42 @@ export const get_track = async (id) => {
   const artist = { id: track.artist, name }
 
   return { ...track, artist, album }
+}
+
+/*
+ * Search engine
+ */
+
+export const search = async (term) => {
+  let artists, albums, tracks
+  let promises = []
+
+  promises.push(async () => {
+    artists = (await query({ type: ["artist"] }))
+      .map(a => ({ ...a, dist: levenshtein(a.name, term) }))
+      .sort((a, b) => a.dist - b.dist)
+  })
+
+  promises.push(async () => {
+    albums = (await query({ type: ["album"] }))
+      .map(a => ({ ...a, dist: levenshtein(a.title, term) }))
+      .sort((a, b) => a.dist - b.dist)
+  })
+
+  promises.push(async () => {
+    tracks = await query({ type: ["lyrics"] })
+
+    for (let i = 0; i < tracks.length; i++) {
+      const track = tracks[i]
+      const dist = levenshtein(track.title, term)
+      const artist = (await get_data(track.artist)).name
+      tracks[i] = { ...track, dist, artist }
+    }
+
+    tracks.sort((a, b) => a.dist - b.dist)
+  })
+
+  await pmap(promises, p => p(), 3)
+
+  return { artists, albums, tracks }
 }

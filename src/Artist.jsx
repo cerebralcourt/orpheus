@@ -33,7 +33,7 @@ function Artist() {
                 {(track, i) => (
                   <a
                     href={"#/lyrics/" + track.id}
-                    class={"block w-full py-1 " + (i() % 2 == 0 ? "bg-gray-200" : "bg-gray-300")}
+                    class={"block w-full py-1 hover:text-indigo-900 " + (i() % 2 == 0 ? "bg-gray-200" : "bg-gray-300")}
                   >
                     {track.title}
                   </a>
