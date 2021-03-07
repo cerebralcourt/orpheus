@@ -17,36 +17,51 @@ async function transaction(wallet, data, tags) {
 
   while (!uploader.isComplete) {
     await uploader.uploadChunk()
-    console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`)
   }
 
   return tx["id"]
 }
 
-async function query(tags) {
-  tags.appname = "orpheus"
-  const to_obj = ([key, value]) => `{name: ${JSON.stringify(key)}, values: [${JSON.stringify(value)}]}`
-  const tags_str = "[" + Object.entries(tags).map(to_obj).join(",") + "]"
+async function get_data(id) {
+  const fetch_data = async (id) => {
+    const raw_data = await arweave.transactions.getData(id, { decode: true, string: true })
+    const data = JSON.parse(raw_data)
+    localforage.setItem(id, data)
+    return data
+  }
+  return await localforage.getItem(id) || await fetch_data(id)
+}
 
-  const query = `query {
-    transactions(tags: ${tags_str}) {
-      edges {
-        node {
-          id
+async function query(tags) {
+  const key = JSON.stringify(tags)
+
+  const fetch_ids = async () => {
+    const to_obj = ([key, value]) => `{name: ${JSON.stringify(key)}, values: ${JSON.stringify(value)}}`
+    const tags_str = "[" + Object.entries({ ...tags, appname: "orpheus" }).map(to_obj).join(",") + "]"
+
+    const query = `query {
+      transactions(tags: ${tags_str}) {
+        edges {
+          node {
+            id
+          }
         }
       }
-    }
-  }`
+    }`
 
-  const res = await arweave.api.post("/graphql", { query })
+    const res = await arweave.api.post("/graphql", { query })
+    const ids = res.data?.data?.transactions?.edges?.map(({ node }) => node.id)
+    localforage.setItem(key, ids)
+    return ids
+  }
 
-  const edges = res.data?.data?.transactions?.edges
+  const ids = await localforage.getItem(key) || await fetch_ids()
   let nodes = []
 
-  for (let i = 0; i < edges.length; i++) {
-    const { node } = edges[i]
-    const data = await arweave.transactions.getData(node.id, { decode: true, string: true })
-    nodes.push({ ...node, ...JSON.parse(data) })
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i]
+    const data = await get_data(id)
+    nodes.push({ id, ...data })
   }
 
   return nodes
@@ -56,7 +71,7 @@ async function query(tags) {
  * Creates artist and album pages if not already available
  */
 export const publish_lyrics = async (wallet, track) => {
-  const artists = await query({ type: "artist", name: track.artist })
+  const artists = await query({ type: ["artist"], name: [track.artist] })
 
   let artist
   if (artists.length) {
@@ -75,9 +90,10 @@ export const publish_lyrics = async (wallet, track) => {
     }
 
     artist = await transaction(wallet, data, { type: "artist", name, letter })
+    localforage.setItem(artist, data)
   }
 
-  const albums = await query({ type: "album", artist, title: track.album })
+  const albums = await query({ type: ["album"], artist: [artist], title: [track.album] })
 
   let album
   if (albums.length) {
@@ -88,12 +104,15 @@ export const publish_lyrics = async (wallet, track) => {
     const image = null
     const data = JSON.stringify({ title, artist })
     album = await transaction(wallet, data, { type: "album", title, artist })
+    localforage.setItem(album, data)
   }
 
   const lyrics = track.lyrics.split(/\n\n+/).map(p => p.split("\n"))
 
   const data = JSON.stringify({ ...track, artist, album, lyrics })
-  return await transaction(wallet, data, { type: "lyrics", artist, album })
+  const id = await transaction(wallet, data, { type: "lyrics", artist, album })
+  localforage.setItem(id, data)
+  return id
 }
 
 /*
@@ -101,25 +120,7 @@ export const publish_lyrics = async (wallet, track) => {
  * Checks the network for any updates and updates local cache if so
  */
 export const get_artists = async (letter, update) => {
-  const artists = await localforage.getItem("artists-" + letter) || []
-
-  query({ type: "artist", letter })
-    .then(async query_artists => {
-      const length = artists.length
-
-      for (let i = 0; i < query_artists.length; i++) {
-        const artist = query_artists[i]
-        if (artists.findIndex(a => a.id === artist.id) === -1) artists.push(artist)
-      }
-
-      if (artists.length > length) {
-        artists.sort((a, b) => a.name > b.name)
-        update(artists)
-        localforage.setItem("artists-" + letter, artists)
-      }
-    })
-    .catch(() => {})
-
+  const artists = await query({ type: ["artist"], letter: [letter] })
   artists.sort((a, b) => a.name > b.name)
   update(artists)
 }
@@ -128,15 +129,14 @@ export const get_artists = async (letter, update) => {
  * Retrieves metadata, albums and lyrics related to the artist
  */
 export const get_artist = async (artist_id) => {
-  const data = await arweave.transactions.getData(artist_id, { decode: true, string: true })
-  const artist = JSON.parse(data)
+  const artist = get_data(artist_id)
 
-  const query_albums = await query({ type: "album", artist: artist_id }, ["id", "title", "year"])
+  const query_albums = await query({ type: ["album"], artist: [artist_id] })
   let albums = []
 
   for (let i = 0; i < query_albums.length; i++) {
     const album = query_albums[i]
-    const tracks = await query({ type: "lyrics", album: album.id, artist: artist_id }, ["id", "title"])
+    const tracks = await query({ type: ["lyrics"], album: [album.id], artist: [artist_id] })
     albums.push({ ...album, tracks })
   }
 
@@ -149,14 +149,10 @@ export const get_artist = async (artist_id) => {
  * Retrieves track metadata and lyrics
  */
 export const get_track = async (id) => {
-  const track_data = await arweave.transactions.getData(id, { decode: true, string: true })
-  const track = JSON.parse(track_data)
+  const track = await get_data(id)
+  const album = await get_data(track.album).title
 
-  const album_data = await arweave.transactions.getData(track.album, { decode: true, string: true })
-  const album = JSON.parse(album_data).title
-
-  const artist_data = await arweave.transactions.getData(track.artist, { decode: true, string: true })
-  const { name } = JSON.parse(artist_data)
+  const { name } = await get_data(track.artist)
   const artist = { id: track.artist, name }
 
   return { ...track, artist, album }
