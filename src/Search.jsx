@@ -2,8 +2,10 @@ import { createSignal } from "solid-js"
 import { For } from "solid-js/web"
 import { search } from "./query"
 
-function Alpha({ letter }) {
+function Search() {
   const [results, setResults] = createSignal(null)
+  const [artistAmount, setArtistAmount] = createSignal(1)
+  const [trackAmount, setTrackAmount] = createSignal(1)
   const term = decodeURI(window.location.hash.split("/")[2])
 
   search(term).then(setResults)
@@ -31,7 +33,7 @@ function Alpha({ letter }) {
   	  <Show when={results()}>
         <div class="md:w-1/2 lg:w-1/3 mx-auto mb-10">
           <h2 class="bg-indigo-500 text-white py-2">Artists</h2>
-          <For each={results().artists}>
+          <For each={results().artists.slice(0, Math.min(5 * artistAmount(), results().artists.length))}>
             {(artist, i) => (
               <a
                 href={"#/artist/" + artist.id}
@@ -41,10 +43,18 @@ function Alpha({ letter }) {
               </a>
             )}
           </For>
+          <Show when={5 * artistAmount() < results().artists.length}>
+            <button
+              onclick={() => setArtistAmount(artistAmount() + 1)}
+              class="w-full py-1 bg-blue-500 text-white"
+            >
+              Load More
+            </button>
+          </Show>
         </div>
         <div class="md:w-1/2 lg:w-1/3 mx-auto mb-10">
           <h2 class="bg-indigo-500 text-white py-2">Tracks</h2>
-          <For each={results().tracks}>
+          <For each={results().tracks.slice(0, Math.min(5 * trackAmount(), results().tracks.length))}>
             {(track, i) => (
               <a
                 href={"#/lyrics/" + track.id}
@@ -54,10 +64,18 @@ function Alpha({ letter }) {
               </a>
             )}
           </For>
+          <Show when={5 * trackAmount() < results().tracks.length}>
+            <button
+              onclick={() => setTrackAmount(trackAmount() + 1)}
+              class="w-full py-1 bg-blue-500 text-white"
+            >
+              Load More
+            </button>
+          </Show>
         </div>
       </Show>
   	</>
   )
 }
 
-export default Alpha
+export default Search
